@@ -12,19 +12,33 @@ from PIL import Image
 from django.conf import settings
 from django.core.files.base import ContentFile
 
-try:
-    from deepface import DeepFace
-    import cv2
-    DEEPFACE_AVAILABLE = True
-    print("✓ DeepFace library loaded successfully")
-    print("⭐ Using ArcFace model with multi-detector fallback")
-    print("⭐ Threshold: 1.2 (very lenient - finds similar face structures)")
-    print("⭐ Handles: glasses, sunglasses, different angles, lighting")
-    print("⭐ Preprocessing: CLAHE + brightness normalization for selfies")
-except ImportError:
-    DEEPFACE_AVAILABLE = False
-    print("WARNING: DeepFace not available.")
-    print("Install it with: pip install deepface tf-keras")
+# Lazy loading: Don't import DeepFace until actually needed
+_deepface_loaded = False
+_deepface = None
+_cv2 = None
+
+def _ensure_deepface():
+    """Lazy load DeepFace only when needed to save memory"""
+    global _deepface_loaded, _deepface, _cv2
+    if not _deepface_loaded:
+        try:
+            from deepface import DeepFace
+            import cv2
+            _deepface = DeepFace
+            _cv2 = cv2
+            _deepface_loaded = True
+            print("✓ DeepFace library loaded successfully")
+            print("⭐ Using ArcFace model with multi-detector fallback")
+            print("⭐ Threshold: 1.2 (very lenient - finds similar face structures)")
+            print("⭐ Handles: glasses, sunglasses, different angles, lighting")
+            print("⭐ Preprocessing: CLAHE + brightness normalization for selfies")
+        except ImportError:
+            print("WARNING: DeepFace not available.")
+            print("Install it with: pip install deepface tf-keras")
+            raise
+    return _deepface, _cv2
+
+DEEPFACE_AVAILABLE = True  # Assume available unless import fails
 
 
 def preprocess_image_for_matching(img_path, is_selfie=False):
@@ -39,8 +53,10 @@ def preprocess_image_for_matching(img_path, is_selfie=False):
     Returns:
         Path to preprocessed image file
     """
-    import cv2
     import tempfile
+    
+    # Lazy load cv2 only when needed
+    _, cv2 = _ensure_deepface()
     
     try:
         # Read image
@@ -99,7 +115,10 @@ def detect_faces_in_image(image_path, url_hash=None, is_selfie=False):
         where encoding is a 512-d face embedding
         and location is (top, right, bottom, left) coordinates
     """
-    if not DEEPFACE_AVAILABLE:
+    # Lazy load DeepFace only when actually needed
+    try:
+        DeepFace, cv2 = _ensure_deepface()
+    except ImportError:
         # Fallback mock mode
         return _mock_detect_faces(image_path, url_hash)
     
@@ -161,8 +180,7 @@ def detect_faces_in_image(image_path, url_hash=None, is_selfie=False):
                 print("  ❌ All detectors failed to find faces")
                 return []
             
-            # Load the image to get face regions
-            import cv2
+            # Load the image to get face regions (cv2 already loaded via _ensure_deepface)
             img = cv2.imread(img_path)
             if img is None:
                 print(f"❌ Error: Could not load image from {img_path}")
