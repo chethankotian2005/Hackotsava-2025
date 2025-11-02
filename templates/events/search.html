@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="search-page">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Find Your Photos</h1>
+            <p class="page-subtitle">{{ event.name }}</p>
+        </div>
+        
+        <!-- Upload Selfie Section -->
+        <div class="upload-section">
+            <form method="post" enctype="multipart/form-data" class="upload-form" id="search-form">
+                {% csrf_token %}
+                
+                <div class="upload-card">
+                    <div class="upload-zone" id="upload-zone">
+                        <input type="file" name="selfie" id="selfie-upload" accept="image/*" required hidden>
+                        <label for="selfie-upload" class="upload-label">
+                            <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span class="upload-text">Click to upload your selfie</span>
+                            <span class="upload-hint">or drag and drop</span>
+                            <span class="upload-formats">PNG, JPG, WEBP up to 10MB</span>
+                        </label>
+                        <div id="preview-container" class="preview-container" style="display: none;">
+                            <img id="image-preview" src="" alt="Preview">
+                            <button type="button" class="btn-remove-preview" id="remove-preview">&times;</button>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-options">
+                        <div class="form-group">
+                            <label for="tolerance-slider">Matching Sensitivity: <span id="tolerance-value">0.6</span></label>
+                            <input type="range" name="tolerance" id="tolerance-slider" min="0.3" max="0.8" step="0.05" value="0.6" class="slider">
+                            <small>Lower values = stricter matching</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg btn-block btn-glow" id="search-btn">
+                        <span class="btn-text">Search Photos</span>
+                        <span class="btn-loader" style="display: none;">
+                            <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Results Section -->
+        {% if matching_photos %}
+        <div class="results-section">
+            <div class="results-header">
+                <h2>Found {{ matching_photos|length }} Matching Photos</h2>
+                <p>Click on any photo to view or download</p>
+            </div>
+            
+            <div class="results-grid">
+                {% for photo, confidence in matching_photos %}
+                <div class="result-card" data-confidence="{{ confidence }}">
+                    <div class="result-image">
+                        {% if photo.thumbnail %}
+                        <img src="{{ photo.thumbnail.url }}" alt="Match" loading="lazy">
+                        {% else %}
+                        <img src="{{ photo.image.url }}" alt="Match" loading="lazy">
+                        {% endif %}
+                        <div class="confidence-badge">{{ confidence|floatformat:0 }}% Match</div>
+                    </div>
+                    <div class="result-actions">
+                        <a href="{{ photo.image.url }}" target="_blank" class="btn btn-sm btn-outline">View</a>
+                        <a href="{% url 'download_photo' photo.id %}" class="btn btn-sm btn-primary" download>Download</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="results-footer">
+                <button class="btn btn-primary" id="download-all">Download All</button>
+                <a href="{% url 'event_gallery' event.slug %}" class="btn btn-outline">View Full Gallery</a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Back to Event -->
+        <div class="back-link">
+            <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 11H7.83l4.88-4.88c.39-.39.39-1.03 0-1.42a.996.996 0 00-1.41 0l-6.59 6.59a.996.996 0 000 1.41l6.59 6.59a.996.996 0 101.41-1.41L7.83 13H19c.55 0 1-.45 1-1s-.45-1-1-1z"/>
+                </svg>
+                Back to Event
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/search.js' %}"></script>
+{% endblock %}

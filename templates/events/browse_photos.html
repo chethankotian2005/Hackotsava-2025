@@ -1,0 +1,2218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="browse-photos-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div>
+                    <h1 class="page-title">Browse All Photos</h1>
+                    <p class="page-subtitle">{{ total_photos }} photo{{ total_photos|pluralize }} from Hackotsava 2025</p>
+                </div>
+                {% if user.is_authenticated and user.is_admin %}
+                <div class="admin-controls">
+                    <button id="toggleSelectMode" class="btn btn-outline" onclick="toggleSelectionMode()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                        Select Photos
+                    </button>
+                    <label id="selectAllLabel" class="select-all-label" style="display: none;">
+                        <input type="checkbox" id="adminSelectAllCheckbox" onchange="toggleAdminSelectAll()">
+                        <span>Select All</span>
+                    </label>
+                    <button id="bulkDeleteBtn" class="btn btn-danger" style="display: none;" onclick="bulkDeletePhotos()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        Delete Selected (<span id="adminSelectedCount">0</span>)
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Find Yourself Section -->
+        <div class="find-yourself-section">
+            <div class="find-yourself-card">
+                <div class="card-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                </div>
+                <h3>Find Yourself in Photos</h3>
+                <p>Upload a selfie and we'll use AI to find all photos containing your face</p>
+                <button class="btn btn-primary btn-glow" onclick="openSelfieModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    Upload Selfie & Find Photos
+                </button>
+            </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-section">
+            <form method="get" class="search-form">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input 
+                        type="text" 
+                        name="search" 
+                        class="search-input" 
+                        placeholder="Search by event name or location..." 
+                        value="{{ search_query }}"
+                    >
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Photo Grid -->
+        {% if photos %}
+        <div class="photo-grid">
+            {% for photo in photos %}
+            <div class="photo-card" data-photo-id="{{ photo.id }}">
+                {% if user.is_authenticated and user.is_admin %}
+                <div class="photo-checkbox" style="display: none;">
+                    <input type="checkbox" class="photo-select" value="{{ photo.id }}" onchange="updateAdminSelectionCount()">
+                </div>
+                {% endif %}
+                <div class="photo-image-wrapper">
+                    <img src="{{ photo.image.url }}" alt="Event photo" class="photo-image" loading="lazy">
+                    <div class="photo-overlay">
+                        <div class="photo-actions">
+                            <a href="{{ photo.image.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                View
+                            </a>
+                            <a href="{% url 'download_photo' photo.id %}" class="btn btn-sm btn-outline">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="photo-info">
+                    <div class="photo-event">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
+                        </svg>
+                        <a href="{% url 'event_detail' photo.event.slug %}" class="event-link">{{ photo.event.name }}</a>
+                    </div>
+                    <div class="photo-meta">
+                        <span class="photo-date">{{ photo.uploaded_at|date:"M d, Y" }}</span>
+                        {% if photo.faces_detected > 0 %}
+                        <span class="photo-faces">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            {{ photo.faces_detected }} face{{ photo.faces_detected|pluralize }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if photos.has_other_pages %}
+        <div class="pagination-wrapper">
+            <div class="pagination">
+                {% if photos.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">&laquo; First</a>
+                <a href="?page={{ photos.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">Previous</a>
+                {% endif %}
+                
+                <span class="page-info">
+                    Page {{ photos.number }} of {{ photos.paginator.num_pages }}
+                </span>
+                
+                {% if photos.has_next %}
+                <a href="?page={{ photos.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">Next</a>
+                <a href="?page={{ photos.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link">Last &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <svg class="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <h3>No Photos Found</h3>
+            <p>{% if search_query %}No photos match your search.{% else %}No photos have been uploaded yet.{% endif %}</p>
+            {% if search_query %}
+            <a href="{% url 'browse_photos' %}" class="btn btn-primary">Clear Search</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Selfie Upload Modal -->
+<div id="selfieModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Find Yourself in Photos</h2>
+            <button class="modal-close" onclick="closeSelfieModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="selfieForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Upload Method Selection -->
+                <div class="upload-methods" id="uploadMethods">
+                    <h3>How would you like to add your photo?</h3>
+                    <div class="method-buttons">
+                        <button type="button" class="method-btn" onclick="showCamera()">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                            <span>Click Selfie</span>
+                        </button>
+                        <button type="button" class="method-btn" onclick="showFileUpload()">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span>Upload Photo</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Camera Section -->
+                <div id="cameraSection" style="display: none;">
+                    <div class="camera-container">
+                        <video id="cameraVideo" autoplay playsinline></video>
+                        <canvas id="cameraCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="capturePhoto()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                            Capture Photo
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="switchCamera()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <polyline points="1 20 1 14 7 14"/>
+                                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                            </svg>
+                            Switch Camera
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="backToMethods()">Cancel</button>
+                    </div>
+                </div>
+                
+                <!-- File Upload Section -->
+                <div class="upload-zone" id="fileUploadSection" style="display: none;">
+                    <input type="file" id="selfieInput" name="selfie" accept="image/*" style="display: none;">
+                    <label for="selfieInput" class="upload-label">
+                        <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span class="upload-text">Click to select a photo</span>
+                        <span class="upload-hint">Or drag and drop your photo here</span>
+                    </label>
+                    <button type="button" class="btn btn-outline" onclick="backToMethods()" style="margin-top: 1rem;">Back</button>
+                </div>
+                
+                <!-- Preview Section -->
+                <div id="previewSection" style="display: none;">
+                    <img id="selfiePreview" alt="Selfie preview">
+                    <button type="button" class="btn btn-outline" onclick="retakePhoto()">Retake / Choose Different Photo</button>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="findPhotosBtn" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    Find My Photos
+                </button>
+            </form>
+            
+            <div id="loadingSection" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>Searching through photos using AI...</p>
+            </div>
+            
+            <!-- Download Progress Overlay -->
+            <div id="downloadOverlay" class="download-overlay" style="display: none;">
+                <div class="download-progress-card">
+                    <div class="download-icon-animation">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </div>
+                    <h3>Preparing Your Download</h3>
+                    <p id="downloadStatus">Creating ZIP file with <span id="downloadPhotoCount">0</span> photos...</p>
+                    
+                    <!-- Real-time Progress -->
+                    <div class="download-progress-details">
+                        <div class="progress-text">
+                            <span id="progressCurrent">0</span> / <span id="progressTotal">0</span> photos processed
+                        </div>
+                        <div class="progress-percentage" id="progressPercentage">0%</div>
+                    </div>
+                    
+                    <div class="download-progress-bar">
+                        <div class="download-progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                    
+                    <p class="download-hint" id="downloadHint">Please wait while we prepare your photos...</p>
+                </div>
+            </div>
+            
+            <div id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h3>Found <span id="matchCount">0</span> photo(s) with your face!</h3>
+                    <div class="results-actions">
+                        <button type="button" class="btn btn-outline" id="selectModeBtn" onclick="togglePhotoSelectionMode()" style="display: none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                                <path d="M9 17l-4-4 1.41-1.41L9 14.17l6.59-6.59L17 9z"/>
+                            </svg>
+                            Select Photos
+                        </button>
+                        <button type="button" class="btn btn-primary" id="downloadSelectedBtn" onclick="downloadSelected()" style="display: none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download <span id="selectedCount">0</span> Selected
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="searchAgain()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                            Search Again
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Selection toolbar (shown when in selection mode) -->
+                <div id="selectionToolbar" class="selection-toolbar" style="display: none;">
+                    <div class="toolbar-left">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            <span>Select All</span>
+                        </label>
+                        <span class="selection-info"><span id="selectionCount">0</span> selected</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button type="button" class="btn-text" onclick="togglePhotoSelectionMode()">Cancel</button>
+                    </div>
+                </div>
+                
+                <div id="matchedPhotos" class="matched-photos-gallery"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="downloadToast" class="download-toast">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    <span id="toastMessage">Downloading...</span>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.browse-photos-page {
+    padding: 3rem 0;
+    min-height: 60vh;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.admin-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.select-all-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.select-all-label:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: var(--primary-purple);
+}
+
+.select-all-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-purple);
+}
+
+.select-all-label span {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    user-select: none;
+}
+
+.photo-checkbox {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+}
+
+.photo-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-purple);
+}
+
+.photo-card.selected {
+    box-shadow: 0 0 0 3px var(--primary-purple);
+    transform: scale(0.98);
+}
+
+.find-yourself-section {
+    margin: 2rem 0;
+}
+
+.find-yourself-card {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+    border: 2px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.find-yourself-card .card-icon {
+    margin-bottom: 1.5rem;
+}
+
+.find-yourself-card .card-icon svg {
+    color: var(--primary-purple);
+}
+
+.find-yourself-card h3 {
+    color: var(--primary-purple);
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.find-yourself-card p {
+    color: var(--text-gray);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.search-section {
+    margin: 2rem 0;
+}
+
+.search-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 0.75rem 1rem;
+}
+
+.search-icon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1rem;
+    padding: 0.5rem;
+}
+
+.search-input:focus {
+    outline: none;
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.photo-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.photo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+    border-color: var(--primary-purple);
+}
+
+.photo-image-wrapper {
+    position: relative;
+    padding-bottom: 75%;
+    overflow: hidden;
+}
+
+.photo-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.photo-card:hover .photo-image {
+    transform: scale(1.05);
+}
+
+.photo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem;
+}
+
+.photo-card:hover .photo-overlay {
+    opacity: 1;
+}
+
+.photo-actions {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.photo-info {
+    padding: 1rem;
+}
+
+.photo-event {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.photo-event svg {
+    color: var(--primary-purple);
+}
+
+.event-link {
+    color: var(--primary-purple);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.event-link:hover {
+    text-decoration: underline;
+}
+
+.photo-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.photo-faces {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.photo-faces svg {
+    color: var(--primary-purple);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-purple);
+}
+
+.modal-header h2 {
+    color: var(--primary-purple);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-gray);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--primary-purple);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.upload-methods {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.upload-methods h3 {
+    color: var(--primary-purple);
+    margin-bottom: 2rem;
+}
+
+.method-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.method-btn {
+    background: var(--card-bg);
+    border: 2px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.method-btn svg {
+    color: var(--primary-purple);
+}
+
+.method-btn span {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.method-btn:hover {
+    border-color: var(--primary-purple);
+    background: rgba(139, 92, 246, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+}
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    background: #000;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+#cameraVideo {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Mirror the video preview for front camera (feels natural to users) */
+    transform: scaleX(-1);
+}
+
+.camera-controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.upload-zone {
+    border: 2px dashed var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary-purple);
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+}
+
+.upload-icon {
+    color: var(--primary-purple);
+}
+
+.upload-text {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.upload-hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+#previewSection {
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+#selfiePreview {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+}
+
+.help-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.loading-spinner {
+    border: 4px solid rgba(139, 92, 246, 0.1);
+    border-top: 4px solid var(--primary-purple);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loadingSection {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+#loadingSection p {
+    color: var(--text-gray);
+    margin-top: 1rem;
+}
+
+/* Download Overlay */
+.download-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.download-progress-card {
+    background: var(--card-bg);
+    border: 2px solid var(--primary-purple);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2.5rem;
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(139, 92, 246, 0.4);
+    animation: slideUp 0.4s ease;
+}
+
+.download-icon-animation {
+    margin-bottom: 1.5rem;
+}
+
+.download-icon-animation svg {
+    color: var(--primary-purple);
+    animation: downloadBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes downloadBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.download-progress-card h3 {
+    color: var(--primary-purple);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.download-progress-card p {
+    color: var(--text-gray);
+    margin-bottom: 1.5rem;
+}
+
+#downloadPhotoCount {
+    color: var(--primary-purple);
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.download-progress-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: var(--radius-md);
+}
+
+.progress-text {
+    color: var(--text-light);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.progress-percentage {
+    color: var(--primary-purple);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.download-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(139, 92, 246, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.download-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #7c3aed, #6d28d9);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+@keyframes progressSlide {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 200% 0%;
+    }
+}
+
+.download-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Toast Notification */
+.download-toast {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 9999;
+    transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-weight: 500;
+}
+
+.download-toast.show {
+    bottom: 30px;
+}
+
+.download-toast svg {
+    flex-shrink: 0;
+    animation: toastBounce 0.6s ease-in-out infinite;
+}
+
+@keyframes toastBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+#resultsSection {
+    margin-top: 2rem;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.results-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+#resultsSection h3 {
+    color: var(--primary-purple);
+    margin: 0;
+}
+
+/* Modern Gallery Layout */
+.matched-photos-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.gallery-photo-item {
+    position: relative;
+    padding-bottom: 100%;
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.gallery-photo-item:hover {
+    transform: scale(0.98);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+}
+
+.gallery-photo-item.selected {
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+.gallery-photo-item img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.gallery-photo-item:hover .photo-overlay {
+    opacity: 1;
+}
+
+.photo-download-btn {
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.photo-download-btn:hover {
+    background: #7c3aed;
+    transform: scale(1.1);
+}
+
+.photo-checkbox {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.selection-mode .photo-checkbox {
+    opacity: 1;
+}
+
+.gallery-photo-item.selected .photo-checkbox {
+    opacity: 1;
+}
+
+.photo-checkbox input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    accent-color: var(--primary-purple);
+}
+
+.photo-confidence {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(139, 92, 246, 0.95);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 5;
+}
+
+/* Selection Toolbar */
+.selection-toolbar {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-purple);
+}
+
+.selection-info {
+    color: var(--primary-purple);
+    font-weight: 600;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--primary-purple);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+}
+
+.btn-text:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+    .matched-photos-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .gallery-photo-item {
+        border-radius: var(--radius-sm);
+    }
+
+    .photo-overlay {
+        padding: 0.5rem;
+    }
+
+    .photo-download-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+    }
+
+    .selection-toolbar {
+        padding: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .selection-info {
+        font-size: 14px;
+    }
+
+    .btn-text {
+        padding: 0.4rem 0.8rem;
+        font-size: 14px;
+    }
+
+    .confidence-badge {
+        font-size: 10px;
+        padding: 0.2rem 0.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .matched-photos-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .photo-download-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+}
+
+/* Old grid styles for compatibility */
+.matched-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.matched-photo-item {
+    position: relative;
+    padding-bottom: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--primary-purple);
+}
+
+.matched-photo-item img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.matched-photo-item .confidence {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(139, 92, 246, 0.9);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .browse-photos-page {
+        padding: 1.5rem 0;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .find-yourself-card {
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .find-yourself-card h3 {
+        font-size: 1.5rem;
+    }
+    
+    .find-yourself-card p {
+        font-size: 1rem;
+    }
+    
+    .search-section {
+        padding: 0 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .search-form {
+        max-width: 100%;
+    }
+    
+    .search-input-wrapper {
+        padding: 0.6rem 0.75rem;
+    }
+    
+    .search-icon {
+        margin: 0;
+        flex-shrink: 0;
+    }
+    
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        padding: 0 1rem;
+    }
+    
+    .photo-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .browse-photos-page {
+        padding: 1rem 0;
+    }
+    
+    .browse-photos-page .container {
+        padding: 0;
+    }
+    
+    .page-header {
+        padding: 0 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .find-yourself-card {
+        padding: 1.5rem 1rem;
+        margin: 0 0.5rem;
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+    
+    .find-yourself-card h3 {
+        font-size: 1.25rem;
+    }
+    
+    .find-yourself-card p {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .find-yourself-card .card-icon svg {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .search-section {
+        padding: 0 !important;
+        margin: 1.5rem 0;
+    }
+    
+    .search-form {
+        max-width: 100%;
+        padding: 0 0.75rem;
+    }
+    
+    .search-input-wrapper {
+        flex-wrap: wrap;
+        padding: 0.6rem 0.75rem;
+    }
+    
+    .search-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .search-input {
+        min-width: 0;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .search-input-wrapper .btn {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    .photo-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Bulk Selection Variables
+let selectionMode = false;
+
+// Toggle selection mode
+function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    const checkboxes = document.querySelectorAll('.photo-checkbox');
+    const toggleBtn = document.getElementById('toggleSelectMode');
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    const selectAllLabel = document.getElementById('selectAllLabel');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    checkboxes.forEach(cb => {
+        cb.style.display = selectionMode ? 'block' : 'none';
+        cb.querySelector('input').checked = false;
+    });
+    
+    // Update button states
+    if (selectionMode) {
+        toggleBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Cancel Selection
+        `;
+        toggleBtn.classList.add('btn-outline');
+        selectAllLabel.style.display = 'flex';
+        selectAllCheckbox.checked = false;
+    } else {
+        toggleBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+            Select Photos
+        `;
+        deleteBtn.style.display = 'none';
+        selectAllLabel.style.display = 'none';
+        // Remove selection highlighting
+        document.querySelectorAll('.photo-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+    }
+    
+    updateAdminSelectionCount();
+}
+
+// Toggle select all (Admin mode)
+function toggleAdminSelectAll() {
+    const selectAllCheckbox = document.getElementById('adminSelectAllCheckbox');
+    const photoCheckboxes = document.querySelectorAll('.photo-select');
+    
+    photoCheckboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+    });
+    
+    updateAdminSelectionCount();
+}
+
+// Update selection count (Admin mode)
+function updateAdminSelectionCount() {
+    const checked = document.querySelectorAll('.photo-select:checked');
+    const count = checked.length;
+    const adminCountEl = document.getElementById('adminSelectedCount');
+    if (adminCountEl) {
+        adminCountEl.textContent = count;
+    }
+    document.getElementById('bulkDeleteBtn').style.display = count > 0 ? 'block' : 'none';
+    
+    // Update card highlighting
+    document.querySelectorAll('.photo-card').forEach(card => {
+        const checkbox = card.querySelector('.photo-select');
+        if (checkbox && checkbox.checked) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+}
+
+// Bulk delete photos
+function bulkDeletePhotos() {
+    const checked = document.querySelectorAll('.photo-select:checked');
+    const photoIds = Array.from(checked).map(cb => cb.value);
+    
+    if (photoIds.length === 0) {
+        alert('Please select photos to delete');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${photoIds.length} photo(s)? This action cannot be undone.`)) {
+        return;
+    }
+    
+    // Show loading
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    const originalText = deleteBtn.innerHTML;
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></span> Deleting...';
+    
+    // Send delete request
+    const formData = new FormData();
+    photoIds.forEach(id => {
+        formData.append('photo_ids[]', id);
+    });
+    
+    fetch('{% url "bulk_delete_photos" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // Remove deleted photos from DOM
+            checked.forEach(cb => {
+                const card = cb.closest('.photo-card');
+                if (card) {
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.8)';
+                    setTimeout(() => card.remove(), 300);
+                }
+            });
+            
+            // Reset selection mode after deletion
+            setTimeout(() => {
+                toggleSelectionMode();
+                // Update photo count
+                const remaining = document.querySelectorAll('.photo-card').length;
+                const subtitle = document.querySelector('.page-subtitle');
+                if (subtitle) {
+                    subtitle.textContent = `${remaining} photo${remaining !== 1 ? 's' : ''} from Hackotsava 2025`;
+                }
+            }, 400);
+        } else {
+            alert('Error: ' + data.error);
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        alert('Error deleting photos: ' + error);
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+    });
+}
+
+// Toast notification for downloads
+function showDownloadToast(message) {
+    const toast = document.getElementById('downloadToast');
+    const messageSpan = document.getElementById('toastMessage');
+    messageSpan.textContent = message;
+    
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Gallery Functions
+// selectionMode variable declared globally above
+
+function togglePhotoSelectionMode() {
+    selectionMode = !selectionMode;
+    const gallery = document.getElementById('matchedPhotos');
+    const toolbar = document.getElementById('selectionToolbar');
+    const selectBtn = document.getElementById('selectModeBtn');
+    const downloadBtn = document.getElementById('downloadSelectedBtn');
+    
+    if (selectionMode) {
+        gallery.classList.add('selection-mode');
+        toolbar.style.display = 'flex';
+        selectBtn.style.display = 'none';
+        downloadBtn.style.display = 'inline-flex';
+        updateSelectionCount();
+    } else {
+        gallery.classList.remove('selection-mode');
+        toolbar.style.display = 'none';
+        selectBtn.style.display = 'inline-flex';
+        downloadBtn.style.display = 'none';
+        
+        // Deselect all
+        document.querySelectorAll('.photo-select-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        document.querySelectorAll('.gallery-photo-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        updateSelectionCount();
+    }
+}
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.photo-select-checkbox');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+        const photoItem = cb.closest('.gallery-photo-item');
+        if (cb.checked) {
+            photoItem.classList.add('selected');
+        } else {
+            photoItem.classList.remove('selected');
+        }
+    });
+    
+    updateSelectionCount();
+}
+
+function updateSelectionCount() {
+    const selected = document.querySelectorAll('.photo-select-checkbox:checked');
+    const count = selected.length;
+    
+    // Update both count displays
+    const selectionCountEl = document.getElementById('selectionCount');
+    const selectedCountEl = document.getElementById('selectedCount');
+    
+    if (selectionCountEl) {
+        selectionCountEl.textContent = count;
+    }
+    if (selectedCountEl) {
+        selectedCountEl.textContent = count;
+    }
+    
+    // Update photo item visual state
+    document.querySelectorAll('.photo-select-checkbox').forEach(cb => {
+        const photoItem = cb.closest('.gallery-photo-item');
+        if (cb.checked) {
+            photoItem.classList.add('selected');
+        } else {
+            photoItem.classList.remove('selected');
+        }
+    });
+    
+    // Update select all checkbox
+    const allCheckboxes = document.querySelectorAll('.photo-select-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = count === allCheckboxes.length && allCheckboxes.length > 0;
+    }
+}
+
+function viewPhoto(url) {
+    window.open(url, '_blank');
+}
+
+function downloadSinglePhoto(downloadUrl, photoId) {
+    showDownloadToast('Downloading photo...');
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `photo_${photoId}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function downloadSelected() {
+    const selected = document.querySelectorAll('.photo-select-checkbox:checked');
+    
+    if (selected.length === 0) {
+        alert('Please select at least one photo to download');
+        return;
+    }
+    
+    // Show progress overlay
+    const overlay = document.getElementById('downloadOverlay');
+    const statusText = document.getElementById('downloadStatus');
+    const progressCurrent = document.getElementById('progressCurrent');
+    const progressTotal = document.getElementById('progressTotal');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const progressFill = document.getElementById('progressFill');
+    const downloadHint = document.getElementById('downloadHint');
+    
+    progressTotal.textContent = selected.length;
+    progressCurrent.textContent = '0';
+    progressPercentage.textContent = '0%';
+    progressFill.style.width = '0%';
+    statusText.innerHTML = `Downloading <span id="downloadPhotoCount">${selected.length}</span> photo(s)...`;
+    downloadHint.textContent = 'Please wait while we download your photos...';
+    overlay.style.display = 'flex';
+    
+    let downloaded = 0;
+    
+    // Download each photo sequentially with delay
+    selected.forEach((checkbox, index) => {
+        setTimeout(() => {
+            const photoItem = checkbox.closest('.gallery-photo-item');
+            const downloadUrl = photoItem.dataset.downloadUrl;
+            const photoId = photoItem.dataset.photoId;
+            
+            // Create a temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `photo_${String(index + 1).padStart(3, '0')}_${photoId}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            downloaded++;
+            const progress = (downloaded / selected.length) * 100;
+            progressCurrent.textContent = downloaded;
+            progressPercentage.textContent = Math.round(progress) + '%';
+            progressFill.style.width = progress + '%';
+            
+            if (downloaded === selected.length) {
+                downloadHint.textContent = 'All downloads started! Check your downloads folder.';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    // Exit selection mode
+                    togglePhotoSelectionMode();
+                }, 2000);
+            }
+        }, index * 500); // 500ms delay between each download
+    });
+}
+
+// Download all matched photos
+let matchedPhotoIds = [];
+let progressInterval = null;
+
+function downloadAllMatched() {
+    if (matchedPhotoIds.length === 0) {
+        alert('No photos to download');
+        return;
+    }
+    
+    // Show download overlay
+    const overlay = document.getElementById('downloadOverlay');
+    const photoCountSpan = document.getElementById('downloadPhotoCount');
+    const statusText = document.getElementById('downloadStatus');
+    const progressCurrent = document.getElementById('progressCurrent');
+    const progressTotal = document.getElementById('progressTotal');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const progressFill = document.getElementById('progressFill');
+    const downloadHint = document.getElementById('downloadHint');
+    
+    const photoCount = Math.min(matchedPhotoIds.length, 50); // Max 50 photos
+    photoCountSpan.textContent = photoCount;
+    progressTotal.textContent = photoCount;
+    progressCurrent.textContent = '0';
+    progressPercentage.textContent = '0%';
+    progressFill.style.width = '0%';
+    
+    if (matchedPhotoIds.length > 50) {
+        statusText.innerHTML = `Creating ZIP file with first <span id="downloadPhotoCount">50</span> photos...<br><small style="color: #fbbf24;">Limited to 50 photos for faster download</small>`;
+    } else {
+        statusText.innerHTML = `Creating ZIP file with <span id="downloadPhotoCount">${photoCount}</span> photos...`;
+    }
+    
+    overlay.style.display = 'flex';
+    
+    const downloadBtn = document.getElementById('downloadAllBtn');
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px; margin-right: 8px;"></span> Preparing...';
+    
+    // Simulate progress (estimated 1-2 seconds per photo)
+    let currentProgress = 0;
+    const estimatedTimePerPhoto = 1500; // 1.5 seconds per photo
+    const totalEstimatedTime = photoCount * estimatedTimePerPhoto;
+    const updateInterval = 200; // Update every 200ms
+    const incrementPerUpdate = (100 / (totalEstimatedTime / updateInterval));
+    
+    downloadHint.textContent = 'Downloading photos from cloud...';
+    
+    progressInterval = setInterval(() => {
+        currentProgress += incrementPerUpdate;
+        if (currentProgress >= 95) {
+            currentProgress = 95; // Stop at 95% until actual download completes
+            downloadHint.textContent = 'Almost done! Finalizing ZIP file...';
+            clearInterval(progressInterval);
+        }
+        
+        const photosProcessed = Math.floor((currentProgress / 100) * photoCount);
+        progressCurrent.textContent = photosProcessed;
+        progressPercentage.textContent = Math.round(currentProgress) + '%';
+        progressFill.style.width = currentProgress + '%';
+    }, updateInterval);
+    
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "download_all_photos" %}';
+    form.style.display = 'none';
+    
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    form.appendChild(csrfInput);
+    
+    // Add photo IDs
+    matchedPhotoIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'photo_ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+    
+    // Complete progress and hide overlay after download starts
+    setTimeout(() => {
+        if (progressInterval) clearInterval(progressInterval);
+        
+        // Complete the progress
+        progressCurrent.textContent = photoCount;
+        progressPercentage.textContent = '100%';
+        progressFill.style.width = '100%';
+        downloadHint.textContent = 'Download started! Check your downloads folder.';
+        
+        // Hide after showing completion
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalText;
+            try {
+                document.body.removeChild(form);
+            } catch(e) {
+                // Form might already be removed
+            }
+        }, 2000);
+    }, totalEstimatedTime + 2000); // Add 2 seconds buffer
+}
+
+// Camera variables
+let cameraStream = null;
+let currentFacingMode = 'user'; // 'user' for front camera, 'environment' for back
+
+// Modal Functions
+function openSelfieModal() {
+    document.getElementById('selfieModal').classList.add('active');
+    resetModal();
+}
+
+function closeSelfieModal() {
+    document.getElementById('selfieModal').classList.remove('active');
+    stopCamera();
+    resetModal();
+}
+
+function resetModal() {
+    // Show initial upload methods view
+    document.getElementById('uploadMethods').style.display = 'block';
+    document.getElementById('cameraSection').style.display = 'none';
+    document.getElementById('fileUploadSection').style.display = 'none';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'none';
+    
+    // Ensure form is visible
+    const selfieForm = document.getElementById('selfieForm');
+    if (selfieForm) {
+        selfieForm.style.display = 'block';
+    }
+    
+    // Disable submit button until photo is selected
+    document.getElementById('findPhotosBtn').disabled = true;
+    
+    // Clear and reset file input
+    const fileInput = document.getElementById('selfieInput');
+    if (fileInput) {
+        fileInput.value = '';
+        // Force complete reset of file input
+        fileInput.type = 'text';
+        fileInput.type = 'file';
+    }
+    
+    // Clear preview image
+    const preview = document.getElementById('selfiePreview');
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+    
+    // Clear results
+    document.getElementById('matchedPhotos').innerHTML = '';
+    document.getElementById('matchCount').textContent = '0';
+}
+
+function backToMethods() {
+    stopCamera();
+    resetModal();
+}
+
+function retakePhoto() {
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('uploadMethods').style.display = '';
+    document.getElementById('findPhotosBtn').disabled = true;
+}
+
+function searchAgain() {
+    // Stop camera if running
+    stopCamera();
+    
+    // Get the form element
+    const selfieForm = document.getElementById('selfieForm');
+    
+    // Hide all sections first
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'none';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('cameraSection').style.display = 'none';
+    document.getElementById('fileUploadSection').style.display = 'none';
+    
+    // Show upload methods and ensure form is visible
+    document.getElementById('uploadMethods').style.display = 'block';
+    if (selfieForm) {
+        selfieForm.style.display = 'block';
+    }
+    
+    // Reset button state
+    document.getElementById('findPhotosBtn').disabled = true;
+    
+    // Clear and reset file input
+    const fileInput = document.getElementById('selfieInput');
+    if (fileInput) {
+        fileInput.value = '';
+        fileInput.type = 'text';  // Force reset
+        fileInput.type = 'file';  // Restore type
+    }
+    
+    // Clear the preview image
+    const preview = document.getElementById('selfiePreview');
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+    
+    // Clear results
+    document.getElementById('matchedPhotos').innerHTML = '';
+    document.getElementById('matchCount').textContent = '0';
+}
+
+// Show camera
+async function showCamera() {
+    document.getElementById('uploadMethods').style.display = 'none';
+    document.getElementById('cameraSection').style.display = 'block';
+    await startCamera();
+}
+
+// Show file upload
+function showFileUpload() {
+    document.getElementById('uploadMethods').style.display = 'none';
+    document.getElementById('fileUploadSection').style.display = 'block';
+}
+
+// Camera functions
+async function startCamera() {
+    try {
+        const constraints = {
+            video: {
+                facingMode: currentFacingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+        
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = cameraStream;
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        alert('Unable to access camera. Please check permissions or use file upload instead.');
+        backToMethods();
+    }
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+}
+
+async function switchCamera() {
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+    stopCamera();
+    await startCamera();
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const preview = document.getElementById('selfiePreview');
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Get canvas context
+    const ctx = canvas.getContext('2d');
+    
+    // 🔥 FIX: Flip the image horizontally for front camera (mirror correction)
+    if (currentFacingMode === 'user') {
+        // Save the current context state
+        ctx.save();
+        
+        // Flip horizontally by scaling x by -1
+        ctx.scale(-1, 1);
+        
+        // Draw the video frame (flipped)
+        ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+        
+        // Restore the context state
+        ctx.restore();
+    } else {
+        // Back camera - no flip needed
+        ctx.drawImage(video, 0, 0);
+    }
+    
+    // Convert canvas to blob and create file
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        document.getElementById('selfieInput').files = dataTransfer.files;
+        
+        // Show preview
+        preview.src = canvas.toDataURL('image/jpeg');
+        document.getElementById('cameraSection').style.display = 'none';
+        document.getElementById('previewSection').style.display = 'block';
+        document.getElementById('findPhotosBtn').disabled = false;
+        
+        stopCamera();
+    }, 'image/jpeg', 0.95);
+}
+
+// Close modal on background click
+document.getElementById('selfieModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSelfieModal();
+    }
+});
+
+// File upload handling
+const selfieInput = document.getElementById('selfieInput');
+const selfiePreview = document.getElementById('selfiePreview');
+const previewSection = document.getElementById('previewSection');
+const fileUploadSection = document.getElementById('fileUploadSection');
+const findBtn = document.getElementById('findPhotosBtn');
+
+selfieInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            selfiePreview.src = e.target.result;
+            fileUploadSection.style.display = 'none';
+            previewSection.style.display = 'block';
+            findBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Drag and drop
+fileUploadSection.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--primary-purple)';
+});
+
+fileUploadSection.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--border-purple)';
+});
+
+fileUploadSection.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--border-purple)';
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
+        selfieInput.files = files;
+        selfieInput.dispatchEvent(new Event('change'));
+    }
+});
+
+// Form submission
+const selfieForm = document.getElementById('selfieForm');
+selfieForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const loadingSection = document.getElementById('loadingSection');
+    const resultsSection = document.getElementById('resultsSection');
+    
+    // Show loading
+    this.style.display = 'none';
+    loadingSection.style.display = 'block';
+    resultsSection.style.display = 'none';
+    
+    try {
+        const response = await fetch('{% url "find_my_photos" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        // Hide loading
+        loadingSection.style.display = 'none';
+        
+        if (data.success) {
+            // Show results
+            const matchCount = document.getElementById('matchCount');
+            const matchedPhotos = document.getElementById('matchedPhotos');
+            const selectModeBtn = document.getElementById('selectModeBtn');
+            
+            matchCount.textContent = data.matches.length;
+            matchedPhotos.innerHTML = '';
+            matchedPhotos.className = 'matched-photos-gallery';
+            
+            // Store matched photo data
+            window.matchedPhotosData = data.matches;
+            
+            // Show select button
+            if (data.matches.length > 0) {
+                selectModeBtn.style.display = 'inline-flex';
+            }
+            
+            data.matches.forEach((match, index) => {
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'gallery-photo-item';
+                photoDiv.dataset.photoId = match.photo_id;
+                photoDiv.dataset.photoUrl = match.photo_url;
+                photoDiv.dataset.downloadUrl = match.download_url;
+                
+                photoDiv.innerHTML = `
+                    <img src="${match.photo_url}" alt="Matched photo" loading="lazy" onclick="viewPhoto('${match.photo_url}')" style="cursor: pointer;">
+                    <div class="photo-checkbox">
+                        <input type="checkbox" class="photo-select-checkbox" value="${match.photo_id}" onchange="updateSelectionCount()">
+                    </div>
+                    <div class="photo-overlay" onclick="viewPhoto('${match.photo_url}')" style="cursor: pointer;">
+                        <button class="photo-download-btn" onclick="event.stopPropagation(); downloadSinglePhoto('${match.download_url}', '${match.photo_id}')" title="Download">
+                            ⬇
+                        </button>
+                    </div>
+                `;
+                
+                matchedPhotos.appendChild(photoDiv);
+            });
+            
+            resultsSection.style.display = 'block';
+        } else {
+            alert(data.error || 'An error occurred while searching for photos.');
+            this.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        loadingSection.style.display = 'none';
+        this.style.display = 'block';
+    }
+});
+
+// Lightbox functionality
+document.querySelectorAll('.photo-image').forEach(img => {
+    img.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.open(this.src, '_blank');
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Environment
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Face Recognition Cache
+*.pkl
+
+# Test and temporary files
+test_*.py
+check_*.py
+*_features.py
+*_fixes.py
+*_implementation.md
+session_summary.py
+quick_start_guide.py
+CLOUDINARY_SETUP.md
+INSTALL_WINDOWS.md
+
+# Documentation (keep only deployment guide)
+README_OLD.md
+analytics_implementation.md
+
+*.npy

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-container">
+        <div class="error-content">
+            <h1 class="error-code">404</h1>
+            <h2 class="error-title">Page Not Found</h2>
+            <p class="error-description">
+                The page you're looking for doesn't exist or has been moved.
+            </p>
+            <div class="error-actions">
+                <a href="{% url 'home' %}" class="btn btn-primary btn-glow">Go Home</a>
+                <a href="{% url 'event_list' %}" class="btn btn-outline">Browse Events</a>
+            </div>
+        </div>
+        <div class="error-illustration">
+            <svg width="400" height="300" viewBox="0 0 400 300" fill="none">
+                <circle cx="200" cy="150" r="100" stroke="var(--primary-purple)" stroke-width="2" opacity="0.2"/>
+                <circle cx="200" cy="150" r="70" stroke="var(--primary-purple)" stroke-width="2" opacity="0.4"/>
+                <circle cx="200" cy="150" r="40" stroke="var(--primary-purple)" stroke-width="2"/>
+                <path d="M180 140 L220 140 M180 160 L220 160" stroke="var(--primary-purple)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+</div>
+{% endblock %}

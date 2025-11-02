@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="gallery-page">
+    <div class="container">
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">{{ event.name }}</h1>
+                <p class="page-subtitle">Event Gallery - {{ event.event_date|date:"F d, Y" }}</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'search_faces' event.slug %}" class="btn btn-primary btn-glow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    Search My Photos
+                </a>
+            </div>
+        </div>
+        
+        <!-- Event Info -->
+        <div class="event-info-bar">
+            <div class="info-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2z"/>
+                </svg>
+                <span>{{ photos.paginator.count }} Photos</span>
+            </div>
+            {% if event.location %}
+            <div class="info-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                </svg>
+                <span>{{ event.location }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Gallery Grid -->
+        {% if photos %}
+        <div class="gallery">
+            {% for photo in photos %}
+            <div class="gallery-item">
+                {% if photo.thumbnail %}
+                <img src="{{ photo.thumbnail.url }}" alt="Event photo" loading="lazy" data-full="{{ photo.image.url }}">
+                {% else %}
+                <img src="{{ photo.image.url }}" alt="Event photo" loading="lazy" data-full="{{ photo.image.url }}">
+                {% endif %}
+                
+                {% if photo.face_count > 0 %}
+                <div class="photo-badge">{{ photo.face_count }} face{{ photo.face_count|pluralize }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if photos.has_other_pages %}
+        <div class="pagination">
+            {% if photos.has_previous %}
+            <a href="?page={{ photos.previous_page_number }}" class="page-link">&laquo; Previous</a>
+            {% endif %}
+            
+            <span class="page-info">Page {{ photos.number }} of {{ photos.paginator.num_pages }}</span>
+            
+            {% if photos.has_next %}
+            <a href="?page={{ photos.next_page_number }}" class="page-link">Next &raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <h3>No photos yet</h3>
+            <p>Photos will appear here once they are uploaded</p>
+        </div>
+        {% endif %}
+        
+        <!-- Back Link -->
+        <div class="back-link mt-xl">
+            <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 11H7.83l4.88-4.88c.39-.39.39-1.03 0-1.42a.996.996 0 00-1.41 0l-6.59 6.59a.996.996 0 000 1.41l6.59 6.59a.996.996 0 101.41-1.41L7.83 13H19c.55 0 1-.45 1-1s-.45-1-1-1z"/>
+                </svg>
+                Back to Event
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox will be created by JavaScript -->
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.event-info-bar {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-gray);
+}
+
+.info-item svg {
+    color: var(--primary-purple);
+}
+
+.photo-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: var(--gradient-purple);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.header-content {
+    flex: 1;
+}
+
+.header-actions {
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+    }
+    
+    .header-actions {
+        width: 100%;
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

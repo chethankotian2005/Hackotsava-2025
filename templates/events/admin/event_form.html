@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="admin-form-page">
+    <div class="container">
+        <div class="form-header">
+            <h1 class="page-title">
+                {% if event %}Edit Event{% else %}Create New Event{% endif %}
+            </h1>
+            <p class="page-subtitle">
+                {% if event %}Update event details{% else %}Add a new event to Hackotsava 2025{% endif %}
+            </p>
+        </div>
+        
+        <div class="form-container">
+            <form method="post" enctype="multipart/form-data" class="event-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3 class="section-heading">Basic Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}">Event Name *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="form-error">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.event_date.id_for_label }}">Event Date *</label>
+                            {{ form.event_date }}
+                            {% if form.event_date.errors %}
+                            <div class="form-error">{{ form.event_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.location.id_for_label }}">Location</label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                            <div class="form-error">{{ form.location.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="form-error">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-help">Provide details about the event</small>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-heading">Media & Settings</h3>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.cover_image.id_for_label }}">Cover Image</label>
+                        {{ form.cover_image }}
+                        {% if form.cover_image.errors %}
+                        <div class="form-error">{{ form.cover_image.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-help">Upload a cover image for the event (Optional)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.is_public }}
+                            <label for="{{ form.is_public.id_for_label }}" class="form-check-label">
+                                Make event public
+                            </label>
+                        </div>
+                        {% if form.is_public.errors %}
+                        <div class="form-error">{{ form.is_public.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-help">Public events are visible to all users</small>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg btn-glow">
+                        {% if event %}Update Event{% else %}Create Event{% endif %}
+                    </button>
+                    <a href="{% if event %}{% url 'event_detail' event.slug %}{% else %}{% url 'admin_dashboard' %}{% endif %}" class="btn btn-outline btn-lg">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-form-page {
+    padding: 3rem 0;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-purple);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.section-heading {
+    color: var(--primary-purple);
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+    margin: 0;
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-purple);
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

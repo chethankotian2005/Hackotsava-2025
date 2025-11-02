@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="upload-page">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Upload Photos</h1>
+            <p class="page-subtitle">{{ event.name }}</p>
+        </div>
+        
+        <div class="upload-container">
+            <form method="post" enctype="multipart/form-data" id="upload-form">
+                {% csrf_token %}
+                
+                <div class="upload-card">
+                    <div class="upload-instructions">
+                        <h3>📸 Bulk Photo Upload</h3>
+                        <p>Upload multiple photos from the event. Face detection will run automatically.</p>
+                        <ul class="instructions-list">
+                            <li>✓ Supported formats: JPG, PNG, WEBP</li>
+                            <li>✓ Maximum file size: 10MB per photo</li>
+                            <li>✓ Select multiple photos at once</li>
+                            <li>✓ Drag and drop supported</li>
+                            <li>✓ Automatic face detection and encoding</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="upload-zone" id="upload-zone">
+                        {{ form.photos }}
+                        <label for="id_photos" class="upload-label">
+                            <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span class="upload-text">Click to select photos or drag & drop</span>
+                            <span class="upload-hint">You can select multiple files</span>
+                        </label>
+                    </div>
+                    
+                    <div id="file-list" class="file-list" style="display: none;">
+                        <h4>Selected Files</h4>
+                        <div id="files-container"></div>
+                    </div>
+                    
+                    <div class="progress-section" id="progress-section" style="display: none;">
+                        <h4>Upload Progress</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p class="progress-text" id="progress-text">0% Complete</p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block btn-glow" id="upload-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            Upload Photos
+                        </button>
+                        <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline btn-lg btn-block">Cancel</a>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="upload-tips">
+                <h4>💡 Tips for Best Results</h4>
+                <ul>
+                    <li>Upload high-quality photos for better face detection</li>
+                    <li>Ensure faces are clearly visible and well-lit</li>
+                    <li>Photos will be processed automatically after upload</li>
+                    <li>Processing time depends on the number of faces in each photo</li>
+                    <li>You'll receive a summary after all photos are processed</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.upload-page {
+    padding: 3rem 0;
+}
+
+.upload-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.upload-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.upload-instructions {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-purple);
+}
+
+.upload-instructions h3 {
+    color: var(--primary-purple);
+    margin-bottom: 1rem;
+}
+
+.instructions-list {
+    list-style: none;
+    text-align: left;
+    max-width: 500px;
+    margin: 1rem auto 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.instructions-list li {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+
+.file-list {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-purple);
+}
+
+.file-list h4 {
+    color: var(--primary-purple);
+    margin-bottom: 1rem;
+}
+
+#files-container {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-darker);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-md);
+    color: var(--text-gray);
+}
+
+.file-item .file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-item .file-size {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-left: 1rem;
+}
+
+.progress-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-purple);
+}
+
+.progress-section h4 {
+    color: var(--primary-purple);
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: var(--bg-darker);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--gradient-purple);
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 0.5rem;
+    color: var(--text-gray);
+}
+
+.upload-tips {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--border-purple);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+}
+
+.upload-tips h4 {
+    color: var(--primary-purple);
+    margin-bottom: 1rem;
+}
+
+.upload-tips ul {
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.upload-tips li {
+    color: var(--text-gray);
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.upload-tips li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--primary-purple);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('id_photos');
+    const fileList = document.getElementById('file-list');
+    const filesContainer = document.getElementById('files-container');
+    const uploadForm = document.getElementById('upload-form');
+    const uploadBtn = document.getElementById('upload-btn');
+    const progressSection = document.getElementById('progress-section');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    // Drag & Drop
+    uploadZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadZone.classList.add('drag-over');
+    });
+    
+    uploadZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+    });
+    
+    uploadZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            displayFiles(files);
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        displayFiles(e.target.files);
+    });
+    
+    function displayFiles(files) {
+        if (files.length === 0) return;
+        
+        filesContainer.innerHTML = '';
+        fileList.style.display = 'block';
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            
+            fileItem.innerHTML = `
+                <span class="file-name">${file.name}</span>
+                <span class="file-size">${fileSize} MB</span>
+            `;
+            
+            filesContainer.appendChild(fileItem);
+        }
+    }
+    
+    // Form submission with progress
+    uploadForm.addEventListener('submit', function(e) {
+        if (fileInput.files && fileInput.files.length > 0) {
+            const fileCount = fileInput.files.length;
+            
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>Uploading ' + fileCount + ' photos to cloud...</span>';
+            
+            progressSection.style.display = 'block';
+            progressText.textContent = 'Uploading ' + fileCount + ' photos to Cloudinary... Please wait, this may take a few minutes.';
+            
+            // Show indeterminate progress
+            progressFill.style.width = '100%';
+            progressFill.style.animation = 'pulse 2s ease-in-out infinite';
+        }
+    });
+});
+</script>
+{% endblock %}

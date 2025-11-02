@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="container">
+        <div class="profile-header">
+            <h1 class="page-title">My Profile</h1>
+        </div>
+        
+        <div class="profile-content">
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
+                    {% else %}
+                    <div class="avatar-placeholder">
+                        {{ user.first_name.0 }}{{ user.last_name.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-info">
+                    <h2>{{ user.get_full_name }}</h2>
+                    <p class="profile-role">{{ user.get_role_display }}</p>
+                    
+                    <div class="profile-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Username:</span>
+                            <span class="detail-value">{{ user.username }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">{{ user.email }}</span>
+                        </div>
+                        {% if user.phone_number %}
+                        <div class="detail-item">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value">{{ user.phone_number }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="detail-item">
+                            <span class="detail-label">Member Since:</span>
+                            <span class="detail-value">{{ user.date_joined|date:"F d, Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+                        {% if user.is_admin %}
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline">Admin Dashboard</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

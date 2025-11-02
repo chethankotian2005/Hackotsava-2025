@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-background">
+        <div class="hero-gradient"></div>
+        <div class="hero-pattern"></div>
+    </div>
+    
+    <div class="container hero-container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="title-main">HACKOTSAVA</span>
+                <span class="title-year">2025</span>
+            </h1>
+            <p class="hero-tagline">A national level 30 hours hackathon</p>
+            <div class="event-info-banner">
+                <div class="event-info-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+                    </svg>
+                    <span>3rd - 4th November 2025</span>
+                </div>
+                <div class="event-info-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <span>SMVITM Campus</span>
+                </div>
+            </div>
+            <p class="hero-description">
+                Find yourself in event photos using advanced AI-powered face recognition technology.
+                Upload a selfie and discover all photos containing your face instantly.
+            </p>
+            
+            <div class="hero-actions">
+                <a href="{% url 'browse_photos' %}" class="btn btn-primary btn-glow">
+                    Browse Photos
+                    <svg class="btn-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/>
+                    </svg>
+                </a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-secondary">Get Started</a>
+                {% endif %}
+            </div>
+            
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_events }}</span>
+                    <span class="stat-label">Events</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_photos }}+</span>
+                    <span class="stat-label">Photos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">AI</span>
+                    <span class="stat-label">Powered</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Find your photos in three simple steps</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Upload Selfie</h3>
+                <p class="feature-description">
+                    Upload a clear photo of your face. Our AI will analyze your facial features.
+                </p>
+                <div class="feature-number">01</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">AI Recognition</h3>
+                <p class="feature-description">
+                    Advanced face recognition technology searches through event photos instantly.
+                </p>
+                <div class="feature-number">02</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Download Photos</h3>
+                <p class="feature-description">
+                    View and download all photos containing your face with confidence scores.
+                </p>
+                <div class="feature-number">03</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content">
+            <h2 class="cta-title">Ready to Find Your Photos?</h2>
+            <p class="cta-description">
+                Join Hackotsava 2025 and discover yourself in event moments captured through the lens.
+            </p>
+            <div class="cta-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'event_list' %}" class="btn btn-primary btn-lg btn-glow">Start Searching</a>
+                {% else %}
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg btn-glow">Create Account</a>
+                <a href="{% url 'login' %}" class="btn btn-outline btn-lg">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Technology Section -->
+<section class="tech-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Powered by Advanced AI</h2>
+            <p class="section-subtitle">Cutting-edge face recognition technology</p>
+        </div>
+        
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-icon">⚡</div>
+                <h4>Lightning Fast</h4>
+                <p>Search through thousands of photos in seconds</p>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">🎯</div>
+                <h4>Highly Accurate</h4>
+                <p>State-of-the-art facial recognition algorithms</p>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">🔒</div>
+                <h4>Secure & Private</h4>
+                <p>Your photos and data are protected</p>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">📱</div>
+                <h4>Mobile Friendly</h4>
+                <p>Works seamlessly on all devices</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
