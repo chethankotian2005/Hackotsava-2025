@@ -21,6 +21,7 @@ requests==2.31.0
 
 # Forms and Validation
 django-crispy-forms==2.1
+crispy-bootstrap4==2.0.0
 
 # File Handling
 django-cleanup==8.0.0
