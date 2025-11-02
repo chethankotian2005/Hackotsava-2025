@@ -6,11 +6,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from accounts.init_admin import init_admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('events.urls')),
     path('accounts/', include('accounts.urls')),
+    # One-time admin setup URL
+    path('init-admin-secret-setup/', init_admin, name='init_admin'),
 ]
 
 # Serve media files in development
