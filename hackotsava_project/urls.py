@@ -7,13 +7,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from accounts.init_admin import init_admin
+from accounts.fix_admin_role import fix_admin_role
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('events.urls')),
     path('accounts/', include('accounts.urls')),
-    # One-time admin setup URL
+    # One-time admin setup URLs
     path('init-admin-secret-setup/', init_admin, name='init_admin'),
+    path('fix-admin-role/', fix_admin_role, name='fix_admin_role'),
 ]
 
 # Serve media files in development
