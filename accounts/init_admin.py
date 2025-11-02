@@ -9,13 +9,15 @@ def init_admin(request):
     """Create admin user if it doesn't exist"""
     User = get_user_model()
     email = 'admin@hackotsava.com'
+    username = 'admin'
     password = 'Kotian@2005'
     
-    if User.objects.filter(email=email).exists():
+    if User.objects.filter(email=email).exists() or User.objects.filter(username=username).exists():
         return HttpResponse('⚠️ Admin user already exists!<br><a href="/admin/">Go to Admin Panel</a>', status=200)
     
     try:
         User.objects.create_superuser(
+            username=username,
             email=email,
             password=password,
             first_name='Admin',
@@ -23,6 +25,7 @@ def init_admin(request):
         )
         return HttpResponse(
             f'✅ Admin user created successfully!<br><br>'
+            f'<strong>Username:</strong> {username}<br>'
             f'<strong>Email:</strong> {email}<br>'
             f'<strong>Password:</strong> {password}<br><br>'
             f'<a href="/admin/">Go to Admin Panel</a>',
