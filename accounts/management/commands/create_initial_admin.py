@@ -2,7 +2,9 @@
 Management command to create initial admin user if it doesn't exist
 """
 from django.core.management.base import BaseCommand
-from accounts.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
