@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from accounts.init_admin import init_admin
 from accounts.fix_admin_role import fix_admin_role
+from accounts.check_admin import check_admin_status
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,6 +17,7 @@ urlpatterns = [
     # One-time admin setup URLs
     path('init-admin-secret-setup/', init_admin, name='init_admin'),
     path('fix-admin-role/', fix_admin_role, name='fix_admin_role'),
+    path('check-admin-status/', check_admin_status, name='check_admin_status'),
 ]
 
 # Serve media files in development
