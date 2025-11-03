@@ -136,10 +136,10 @@ LOGOUT_REDIRECT_URL = 'home'
 
 # Face Recognition Settings
 FACE_RECOGNITION_TOLERANCE = config('FACE_RECOGNITION_TOLERANCE', default=0.6, cast=float)
-MAX_UPLOAD_SIZE = config('MAX_UPLOAD_SIZE', default=10485760, cast=int)  # 10MB
+MAX_UPLOAD_SIZE = config('MAX_UPLOAD_SIZE', default=20971520, cast=int)  # 20MB
 
 # File Upload Settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB per file
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20MB per file
 DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500MB total upload size
 DATA_UPLOAD_MAX_NUMBER_FILES = 1000  # Allow up to 1000 files per upload
 FILE_UPLOAD_HANDLERS = [

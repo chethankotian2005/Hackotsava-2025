@@ -80,10 +80,10 @@ function initSelfieUpload() {
             return;
         }
         
-        // Validate file size (10MB)
-        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        // Validate file size (20MB)
+        const maxSize = 20 * 1024 * 1024; // 20MB in bytes
         if (file.size > maxSize) {
-            showNotification('File size exceeds 10MB limit', 'error');
+            showNotification('File size exceeds 20MB limit', 'error');
             return;
         }
         
