@@ -11,12 +11,14 @@ from accounts.fix_admin_role import fix_admin_role
 from accounts.check_admin import check_admin_status
 from accounts.quick_fix_admin import quick_fix_admin
 from accounts.sync_photos_view import sync_cloudinary_photos
+from accounts.setup_event import setup_event
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('events.urls')),
     path('accounts/', include('accounts.urls')),
-    # One-time admin setup URLs
+    # One-time setup URLs
+    path('setup-event/', setup_event, name='setup_event'),
     path('init-admin-secret-setup/', init_admin, name='init_admin'),
     path('fix-admin-role/', fix_admin_role, name='fix_admin_role'),
     path('check-admin-status/', check_admin_status, name='check_admin_status'),
