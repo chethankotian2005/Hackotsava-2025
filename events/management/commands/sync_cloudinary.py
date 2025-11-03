@@ -104,8 +104,7 @@ class Command(BaseCommand):
                 # Create photo object
                 photo = Photo.objects.create(
                     event=event,
-                    image=cloudinary_url,
-                    uploaded_at=timezone.now()
+                    image=cloudinary_url
                 )
                 self.stdout.write(self.style.SUCCESS(f"  ✅ Created database entry"))
                 synced += 1
