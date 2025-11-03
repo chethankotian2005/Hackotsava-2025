@@ -644,25 +644,37 @@ def upload_photos(request, slug):
     
     if request.method == 'POST':
         # Check if AJAX request for progress tracking
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            import json
-            from django.http import JsonResponse
-            
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        print(f"\n{'='*60}")
+        print(f"Upload Request - AJAX: {is_ajax}")
+        print(f"Event: {event.name}")
+        print(f"User: {request.user.username}")
+        print(f"{'='*60}\n")
+        
+        if is_ajax:
             files = request.FILES.getlist('photos')
+            print(f"📸 AJAX Upload - Files received: {len(files)}")
+            
             if not files:
-                return JsonResponse({'error': 'No files provided'}, status=400)
+                print("❌ No files provided")
+                return JsonResponse({'success': False, 'error': 'No files provided'}, status=400)
             
             total_files = len(files)
             uploaded_count = 0
             error_count = 0
             results = []
             
+            print(f"Starting upload of {total_files} files...\n")
+            
             for index, file in enumerate(files, 1):
+                print(f"[{index}/{total_files}] Processing: {file.name} ({file.size / 1024 / 1024:.2f} MB)")
+                
                 try:
                     # Validate each file
                     is_valid, error_msg = validate_image_file(file)
                     if not is_valid:
                         error_count += 1
+                        print(f"  ❌ Validation failed: {error_msg}")
                         results.append({
                             'filename': file.name,
                             'status': 'error',
@@ -678,10 +690,12 @@ def upload_photos(request, slug):
                     )
                     
                     uploaded_count += 1
+                    print(f"  ✅ Uploaded to Cloudinary")
                     
                     # Process faces immediately
                     try:
                         faces_count = process_photo_faces(photo)
+                        print(f"  👤 Detected {faces_count} face(s)")
                         results.append({
                             'filename': file.name,
                             'status': 'success',
@@ -689,10 +703,35 @@ def upload_photos(request, slug):
                             'photo_id': photo.id
                         })
                     except Exception as face_error:
+                        print(f"  ⚠️  Face processing error: {str(face_error)}")
                         results.append({
                             'filename': file.name,
                             'status': 'success',
                             'message': 'Uploaded (face processing pending)',
+                            'photo_id': photo.id
+                        })
+                
+                except Exception as e:
+                    error_count += 1
+                    print(f"  ❌ Upload error: {str(e)}")
+                    results.append({
+                        'filename': file.name,
+                        'status': 'error',
+                        'message': str(e)
+                    })
+            
+            print(f"\n{'='*60}")
+            print(f"✅ Upload Complete!")
+            print(f"Total: {total_files} | Uploaded: {uploaded_count} | Failed: {error_count}")
+            print(f"{'='*60}\n")
+            
+            return JsonResponse({
+                'success': True,
+                'total': total_files,
+                'uploaded': uploaded_count,
+                'failed': error_count,
+                'results': results
+            })
                             'photo_id': photo.id
                         })
                 

@@ -397,9 +397,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         
+        console.log('Starting upload...', 'Files:', selectedFiles.length, 'CSRF:', csrfToken ? 'Found' : 'Missing');
+        
         // Add all files to form data
         selectedFiles.forEach(file => {
             formData.append('photos', file);
+            console.log('Adding file:', file.name, file.size, 'bytes');
         });
         
         const totalFiles = selectedFiles.length;
@@ -414,7 +417,10 @@ document.addEventListener('DOMContentLoaded', function() {
         progressText.textContent = `Uploading ${totalFiles} photo${totalFiles > 1 ? 's' : ''}...`;
         progressStatsText.textContent = `0 / ${totalFiles} photos uploaded`;
         progressPercentage.textContent = '0%';
+        progressFill.style.width = '10%'; // Show initial progress
         uploadResults.innerHTML = '';
+        
+        console.log('Sending AJAX request to:', window.location.href);
         
         // Send AJAX request
         fetch(window.location.href, {
@@ -425,8 +431,16 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
+            
             if (data.success) {
                 const uploaded = data.uploaded;
                 const failed = data.failed;
@@ -469,21 +483,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 uploadResults.innerHTML = resultsHTML;
                 
                 // Show success message and redirect after delay
-                setTimeout(() => {
-                    window.location.href = '{% url "event_detail" event.slug %}';
-                }, 3000);
+                if (uploaded > 0) {
+                    console.log('Upload successful, redirecting in 3 seconds...');
+                    setTimeout(() => {
+                        window.location.href = '{% url "event_detail" event.slug %}';
+                    }, 3000);
+                }
             } else {
+                console.error('Upload failed:', data.error);
                 progressText.innerHTML = '❌ Upload failed: ' + (data.error || 'Unknown error');
+                progressFill.style.width = '0%';
                 uploadBtn.disabled = false;
-                uploadBtn.innerHTML = 'Upload Photos';
+                uploadBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Upload Photos';
                 cancelBtn.style.display = 'inline-block';
             }
         })
         .catch(error => {
             console.error('Upload error:', error);
-            progressText.innerHTML = '❌ Upload failed. Please try again.';
+            progressText.innerHTML = `❌ Upload failed: ${error.message}. Check console for details.`;
+            progressFill.style.width = '0%';
             uploadBtn.disabled = false;
-            uploadBtn.innerHTML = 'Upload Photos';
+            uploadBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Upload Photos';
             cancelBtn.style.display = 'inline-block';
         });
     });
