@@ -732,24 +732,6 @@ def upload_photos(request, slug):
                 'failed': error_count,
                 'results': results
             })
-                            'photo_id': photo.id
-                        })
-                
-                except Exception as e:
-                    error_count += 1
-                    results.append({
-                        'filename': file.name,
-                        'status': 'error',
-                        'message': str(e)
-                    })
-            
-            return JsonResponse({
-                'success': True,
-                'total': total_files,
-                'uploaded': uploaded_count,
-                'failed': error_count,
-                'results': results
-            })
         
         # Standard form submission (fallback)
         form = BulkPhotoUploadForm(request.POST, request.FILES)
