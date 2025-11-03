@@ -737,12 +737,35 @@ def analytics(request):
     Analytics and statistics page
     """
     from django.db.models import Sum
+    from django.contrib.auth import get_user_model
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    User = get_user_model()
     
     # Overall statistics
     total_events = Event.objects.count()
     total_photos = Photo.objects.count()
     total_faces = FaceEncoding.objects.count()
     total_searches = SearchHistory.objects.count()
+    total_users = User.objects.count()
+    
+    # User statistics
+    active_users_24h = User.objects.filter(
+        last_login__gte=timezone.now() - timedelta(hours=24)
+    ).count()
+    
+    active_users_7d = User.objects.filter(
+        last_login__gte=timezone.now() - timedelta(days=7)
+    ).count()
+    
+    # Recent user registrations
+    recent_users = User.objects.order_by('-date_joined')[:10]
+    
+    # Currently active users (logged in within last hour)
+    active_now = User.objects.filter(
+        last_login__gte=timezone.now() - timedelta(hours=1)
+    ).order_by('-last_login')[:20]
     
     # Events with most photos
     top_events = Event.objects.annotate(
@@ -773,6 +796,11 @@ def analytics(request):
         'total_photos': total_photos,
         'total_faces': total_faces,
         'total_searches': total_searches,
+        'total_users': total_users,
+        'active_users_24h': active_users_24h,
+        'active_users_7d': active_users_7d,
+        'recent_users': recent_users,
+        'active_now': active_now,
         'top_events': top_events,
         'recent_searches': recent_searches,
         'top_searchers': top_searchers,
