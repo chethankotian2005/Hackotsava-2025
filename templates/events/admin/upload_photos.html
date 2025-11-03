@@ -46,10 +46,15 @@
                     
                     <div class="progress-section" id="progress-section" style="display: none;">
                         <h4>Upload Progress</h4>
+                        <div class="progress-stats">
+                            <span id="progress-stats-text">0 / 0 photos uploaded</span>
+                            <span id="progress-percentage">0%</span>
+                        </div>
                         <div class="progress-bar">
                             <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
                         </div>
-                        <p class="progress-text" id="progress-text">0% Complete</p>
+                        <p class="progress-text" id="progress-text">Ready to upload</p>
+                        <div id="upload-results" class="upload-results"></div>
                     </div>
                     
                     <div class="form-actions">
@@ -59,7 +64,7 @@
                             </svg>
                             Upload Photos
                         </button>
-                        <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline btn-lg btn-block">Cancel</a>
+                        <a href="{% url 'event_detail' event.slug %}" class="btn btn-outline btn-lg btn-block" id="cancel-btn">Cancel</a>
                     </div>
                 </div>
             </form>
@@ -165,6 +170,19 @@
     margin-left: 1rem;
 }
 
+.file-item .file-status {
+    margin-left: 1rem;
+    font-size: 1.2rem;
+}
+
+.file-status.success {
+    color: #4caf50;
+}
+
+.file-status.error {
+    color: #f44336;
+}
+
 .progress-section {
     margin-top: 2rem;
     padding-top: 2rem;
@@ -174,6 +192,21 @@
 .progress-section h4 {
     color: var(--primary-purple);
     margin-bottom: 1rem;
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--text-gray);
+}
+
+.progress-stats #progress-percentage {
+    font-weight: bold;
+    color: var(--primary-purple);
+    font-size: 1.1rem;
 }
 
 .progress-bar {
@@ -193,8 +226,43 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: 600;
+}
+
+.upload-results {
+    margin-top: 1.5rem;
+}
+
+.results-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+}
+
+.result-item.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: #4caf50;
+}
+
+.result-item.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
+.result-message {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-left: 1rem;
 }
 
 .progress-text {
@@ -254,9 +322,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const filesContainer = document.getElementById('files-container');
     const uploadForm = document.getElementById('upload-form');
     const uploadBtn = document.getElementById('upload-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
     const progressSection = document.getElementById('progress-section');
     const progressFill = document.getElementById('progress-fill');
     const progressText = document.getElementById('progress-text');
+    const progressStatsText = document.getElementById('progress-stats-text');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const uploadResults = document.getElementById('upload-results');
+    
+    let selectedFiles = [];
     
     // Drag & Drop
     uploadZone.addEventListener('dragover', function(e) {
@@ -276,13 +350,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             fileInput.files = files;
-            displayFiles(files);
+            selectedFiles = Array.from(files);
+            displayFiles(selectedFiles);
         }
     });
     
     // File input change
     fileInput.addEventListener('change', function(e) {
-        displayFiles(e.target.files);
+        selectedFiles = Array.from(e.target.files);
+        displayFiles(selectedFiles);
     });
     
     function displayFiles(files) {
@@ -295,33 +371,121 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = files[i];
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
+            fileItem.id = `file-${i}`;
             
             const fileSize = (file.size / 1024 / 1024).toFixed(2);
             
             fileItem.innerHTML = `
                 <span class="file-name">${file.name}</span>
                 <span class="file-size">${fileSize} MB</span>
+                <span class="file-status" id="status-${i}"></span>
             `;
             
             filesContainer.appendChild(fileItem);
         }
     }
     
-    // Form submission with progress
+    // AJAX Form submission with real-time progress
     uploadForm.addEventListener('submit', function(e) {
-        if (fileInput.files && fileInput.files.length > 0) {
-            const fileCount = fileInput.files.length;
-            
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<span class="btn-loader"><svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>Uploading ' + fileCount + ' photos to cloud...</span>';
-            
-            progressSection.style.display = 'block';
-            progressText.textContent = 'Uploading ' + fileCount + ' photos to Cloudinary... Please wait, this may take a few minutes.';
-            
-            // Show indeterminate progress
-            progressFill.style.width = '100%';
-            progressFill.style.animation = 'pulse 2s ease-in-out infinite';
+        e.preventDefault();
+        
+        if (!selectedFiles || selectedFiles.length === 0) {
+            alert('Please select photos to upload');
+            return;
         }
+        
+        const formData = new FormData();
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Add all files to form data
+        selectedFiles.forEach(file => {
+            formData.append('photos', file);
+        });
+        
+        const totalFiles = selectedFiles.length;
+        
+        // Disable upload button
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="btn-loader">⏳ Uploading...</span>';
+        cancelBtn.style.display = 'none';
+        
+        // Show progress section
+        progressSection.style.display = 'block';
+        progressText.textContent = `Uploading ${totalFiles} photo${totalFiles > 1 ? 's' : ''}...`;
+        progressStatsText.textContent = `0 / ${totalFiles} photos uploaded`;
+        progressPercentage.textContent = '0%';
+        uploadResults.innerHTML = '';
+        
+        // Send AJAX request
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const uploaded = data.uploaded;
+                const failed = data.failed;
+                const percentage = Math.round((uploaded / totalFiles) * 100);
+                
+                // Update progress bar
+                progressFill.style.width = percentage + '%';
+                progressPercentage.textContent = percentage + '%';
+                progressStatsText.textContent = `${uploaded} / ${totalFiles} photos uploaded`;
+                
+                if (uploaded > 0) {
+                    progressText.innerHTML = `✅ Successfully uploaded ${uploaded} photo${uploaded > 1 ? 's' : ''}!`;
+                }
+                
+                if (failed > 0) {
+                    progressText.innerHTML += `<br>⚠️ ${failed} photo${failed > 1 ? 's' : ''} failed to upload.`;
+                }
+                
+                // Display results
+                let resultsHTML = '<div class="results-list">';
+                data.results.forEach((result, index) => {
+                    const statusIcon = result.status === 'success' ? '✅' : '❌';
+                    const statusClass = result.status === 'success' ? 'success' : 'error';
+                    
+                    resultsHTML += `
+                        <div class="result-item ${statusClass}">
+                            <span>${statusIcon} ${result.filename}</span>
+                            <span class="result-message">${result.message}</span>
+                        </div>
+                    `;
+                    
+                    // Update file status
+                    const statusEl = document.getElementById(`status-${index}`);
+                    if (statusEl) {
+                        statusEl.textContent = statusIcon;
+                        statusEl.className = `file-status ${statusClass}`;
+                    }
+                });
+                resultsHTML += '</div>';
+                uploadResults.innerHTML = resultsHTML;
+                
+                // Show success message and redirect after delay
+                setTimeout(() => {
+                    window.location.href = '{% url "event_detail" event.slug %}';
+                }, 3000);
+            } else {
+                progressText.innerHTML = '❌ Upload failed: ' + (data.error || 'Unknown error');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = 'Upload Photos';
+                cancelBtn.style.display = 'inline-block';
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            progressText.innerHTML = '❌ Upload failed. Please try again.';
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = 'Upload Photos';
+            cancelBtn.style.display = 'inline-block';
+        });
     });
 });
 </script>

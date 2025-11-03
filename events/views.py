@@ -643,6 +643,76 @@ def upload_photos(request, slug):
     event = get_object_or_404(Event, slug=slug)
     
     if request.method == 'POST':
+        # Check if AJAX request for progress tracking
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            import json
+            from django.http import JsonResponse
+            
+            files = request.FILES.getlist('photos')
+            if not files:
+                return JsonResponse({'error': 'No files provided'}, status=400)
+            
+            total_files = len(files)
+            uploaded_count = 0
+            error_count = 0
+            results = []
+            
+            for index, file in enumerate(files, 1):
+                try:
+                    # Validate each file
+                    is_valid, error_msg = validate_image_file(file)
+                    if not is_valid:
+                        error_count += 1
+                        results.append({
+                            'filename': file.name,
+                            'status': 'error',
+                            'message': error_msg
+                        })
+                        continue
+                    
+                    # Create Photo object - Cloudinary handles upload automatically
+                    photo = Photo.objects.create(
+                        event=event,
+                        image=file,
+                        uploaded_by=request.user
+                    )
+                    
+                    uploaded_count += 1
+                    
+                    # Process faces immediately
+                    try:
+                        faces_count = process_photo_faces(photo)
+                        results.append({
+                            'filename': file.name,
+                            'status': 'success',
+                            'message': f'{faces_count} face(s) detected',
+                            'photo_id': photo.id
+                        })
+                    except Exception as face_error:
+                        results.append({
+                            'filename': file.name,
+                            'status': 'success',
+                            'message': 'Uploaded (face processing pending)',
+                            'photo_id': photo.id
+                        })
+                
+                except Exception as e:
+                    error_count += 1
+                    results.append({
+                        'filename': file.name,
+                        'status': 'error',
+                        'message': str(e)
+                    })
+            
+            return JsonResponse({
+                'success': True,
+                'total': total_files,
+                'uploaded': uploaded_count,
+                'failed': error_count,
+                'results': results
+            })
+        
+        # Standard form submission (fallback)
         form = BulkPhotoUploadForm(request.POST, request.FILES)
         files = request.FILES.getlist('photos')
         
