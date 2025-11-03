@@ -94,8 +94,8 @@ class Command(BaseCommand):
             self.stdout.write(f"[{idx}/{total_photos}] {public_id}")
             self.stdout.write(f"  URL: {cloudinary_url}")
             
-            # Check if photo already exists
-            if Photo.objects.filter(cloudinary_public_id=public_id).exists():
+            # Check if photo already exists by checking if URL contains the public_id
+            if Photo.objects.filter(image__contains=public_id).exists():
                 self.stdout.write(self.style.WARNING(f"  ⏭️  Already exists, skipping"))
                 skipped += 1
                 continue
@@ -105,7 +105,6 @@ class Command(BaseCommand):
                 photo = Photo.objects.create(
                     event=event,
                     image=cloudinary_url,
-                    cloudinary_public_id=public_id,
                     uploaded_at=timezone.now()
                 )
                 self.stdout.write(self.style.SUCCESS(f"  ✅ Created database entry"))
