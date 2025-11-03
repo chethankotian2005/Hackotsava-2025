@@ -162,6 +162,26 @@ class Photo(models.Model):
     
     def __str__(self):
         return f"Photo in {self.event.name} - {self.uploaded_at.strftime('%Y-%m-%d')}"
+    
+    def get_image_url(self):
+        """
+        Get the correct image URL - handles both ImageField and direct Cloudinary URLs
+        """
+        if not self.image:
+            return ''
+        
+        image_str = str(self.image)
+        
+        # If it's already a full Cloudinary URL, return it directly
+        if image_str.startswith('https://res.cloudinary.com/'):
+            return image_str
+        
+        # Otherwise, use the standard .url property
+        try:
+            return self.image.url
+        except Exception:
+            # Fallback to string representation
+            return image_str
 
 
 class FaceEncoding(models.Model):

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load photo_filters %}
 
 {% block content %}
 <div class="search-page">
@@ -66,15 +67,11 @@
                 {% for photo, confidence in matching_photos %}
                 <div class="result-card" data-confidence="{{ confidence }}">
                     <div class="result-image">
-                        {% if photo.thumbnail %}
-                        <img src="{{ photo.thumbnail.url }}" alt="Match" loading="lazy">
-                        {% else %}
-                        <img src="{{ photo.image.url }}" alt="Match" loading="lazy">
-                        {% endif %}
+                        <img src="{{ photo|photo_url }}" alt="Match" loading="lazy">
                         <div class="confidence-badge">{{ confidence|floatformat:0 }}% Match</div>
                     </div>
                     <div class="result-actions">
-                        <a href="{{ photo.image.url }}" target="_blank" class="btn btn-sm btn-outline">View</a>
+                        <a href="{{ photo|photo_url }}" target="_blank" class="btn btn-sm btn-outline">View</a>
                         <a href="{% url 'download_photo' photo.id %}" class="btn btn-sm btn-primary" download>Download</a>
                     </div>
                 </div>

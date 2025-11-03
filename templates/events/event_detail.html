@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load photo_filters %}
 
 {% block content %}
 <div class="event-detail-page">
@@ -88,11 +89,7 @@
             <div class="photos-grid">
                 {% for photo in recent_photos %}
                 <div class="photo-card">
-                    {% if photo.thumbnail %}
-                    <img src="{{ photo.thumbnail.url }}" alt="Event photo" loading="lazy">
-                    {% else %}
-                    <img src="{{ photo.image.url }}" alt="Event photo" loading="lazy">
-                    {% endif %}
+                    <img src="{{ photo|photo_url }}" alt="Event photo" loading="lazy">
                     
                     {% if user.is_admin %}
                     <div class="photo-actions">

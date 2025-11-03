@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load photo_filters %}
 
 {% block content %}
 <div class="gallery-page">
@@ -43,11 +44,7 @@
         <div class="gallery">
             {% for photo in photos %}
             <div class="gallery-item">
-                {% if photo.thumbnail %}
-                <img src="{{ photo.thumbnail.url }}" alt="Event photo" loading="lazy" data-full="{{ photo.image.url }}">
-                {% else %}
-                <img src="{{ photo.image.url }}" alt="Event photo" loading="lazy" data-full="{{ photo.image.url }}">
-                {% endif %}
+                <img src="{{ photo|photo_url }}" alt="Event photo" loading="lazy" data-full="{{ photo|photo_url }}">
                 
                 {% if photo.face_count > 0 %}
                 <div class="photo-badge">{{ photo.face_count }} face{{ photo.face_count|pluralize }}</div>
