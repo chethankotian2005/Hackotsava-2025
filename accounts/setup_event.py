@@ -4,6 +4,7 @@ Visit /setup-event/ to create the event
 """
 from django.http import HttpResponse
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from events.models import Event
 from datetime import datetime
 
@@ -13,6 +14,25 @@ def setup_event(request):
     output_html = "<h1>🎪 Event Setup</h1><hr>"
     
     try:
+        # Get or create admin user first
+        User = get_user_model()
+        admin_user, admin_created = User.objects.get_or_create(
+            username='admin',
+            defaults={
+                'email': 'admin@hackotsava.com',
+                'is_staff': True,
+                'is_superuser': True,
+                'role': 'ADMIN'
+            }
+        )
+        
+        if admin_created:
+            admin_user.set_password('Kotian@2005')
+            admin_user.save()
+            output_html += "<p>✅ Admin user created</p>"
+        else:
+            output_html += "<p>✅ Admin user exists</p>"
+        
         # Check if event exists
         event, created = Event.objects.get_or_create(
             slug='hackotsava-2025',
@@ -21,7 +41,8 @@ def setup_event(request):
                 'description': 'Hackotsava 2025 - Annual Tech Fest',
                 'event_date': datetime(2025, 11, 3).date(),
                 'location': 'College Campus',
-                'is_public': True
+                'is_public': True,
+                'created_by': admin_user
             }
         )
         
