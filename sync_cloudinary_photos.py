@@ -63,11 +63,19 @@ def sync_cloudinary_photos(event_slug='hackotsava-2025', cloudinary_folder='even
     
     try:
         # Get photos from Cloudinary folder
-        result = cloudinary.api.resources(
-            type='upload',
-            prefix=cloudinary_folder,
-            max_results=500
-        )
+        print(f"Fetching photos from Cloudinary...")
+        if cloudinary_folder and cloudinary_folder.strip():
+            result = cloudinary.api.resources(
+                type='upload',
+                prefix=cloudinary_folder,
+                max_results=500
+            )
+        else:
+            # Get all photos (root folder)
+            result = cloudinary.api.resources(
+                type='upload',
+                max_results=500
+            )
         
         cloudinary_photos = result.get('resources', [])
         print(f"Found {len(cloudinary_photos)} photos in Cloudinary\n")
@@ -155,17 +163,22 @@ if __name__ == "__main__":
     
     # Default values
     event_slug = 'hackotsava-2025'
-    cloudinary_folder = 'event_photos/2025/11/03'
+    cloudinary_folder = ''  # Empty = root folder
     
     # Check for command line arguments
     if len(sys.argv) > 1:
-        cloudinary_folder = sys.argv[1]
+        folder_arg = sys.argv[1]
+        if folder_arg and folder_arg.strip():
+            cloudinary_folder = folder_arg
     
     if len(sys.argv) > 2:
         event_slug = sys.argv[2]
     
     print(f"Event: {event_slug}")
-    print(f"Cloudinary Folder: {cloudinary_folder}\n")
+    if cloudinary_folder:
+        print(f"Cloudinary Folder: {cloudinary_folder}\n")
+    else:
+        print(f"Cloudinary Folder: ROOT (all photos)\n")
     
     # Run sync
     sync_cloudinary_photos(event_slug, cloudinary_folder)

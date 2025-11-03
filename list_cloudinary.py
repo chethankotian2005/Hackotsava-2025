@@ -21,50 +21,22 @@ try:
     for folder in result.get('folders', []):
         print(f"  - {folder['name']}/")
     
-    # Try to list photos in event_photos
-    print("\n📸 Photos in event_photos:\n")
+    # List ALL photos (no prefix filter)
+    print("\n📸 ALL Photos in Cloudinary (first 20):\n")
     try:
         photos = cloudinary.api.resources(
             type='upload',
-            prefix='event_photos',
-            max_results=100
+            max_results=20
         )
         
-        for photo in photos.get('resources', []):
-            print(f"  - {photo['public_id']}")
-            print(f"    URL: {photo['secure_url']}")
+        if photos.get('resources'):
+            for photo in photos['resources']:
+                print(f"  - {photo['public_id']}")
+                print(f"    URL: {photo['secure_url'][:80]}...")
+        else:
+            print("  No photos found")
     except Exception as e:
-        print(f"  No photos found or error: {e}")
-    
-    # Try media/event_photos
-    print("\n📸 Photos in media/event_photos:\n")
-    try:
-        photos = cloudinary.api.resources(
-            type='upload',
-            prefix='media/event_photos',
-            max_results=100
-        )
-        
-        for photo in photos.get('resources', []):
-            print(f"  - {photo['public_id']}")
-            print(f"    URL: {photo['secure_url']}")
-    except Exception as e:
-        print(f"  No photos found or error: {e}")
-    
-    # Try just media/
-    print("\n📸 Photos in media/:\n")
-    try:
-        photos = cloudinary.api.resources(
-            type='upload',
-            prefix='media/',
-            max_results=100
-        )
-        
-        for photo in photos.get('resources', []):
-            print(f"  - {photo['public_id']}")
-            print(f"    URL: {photo['secure_url']}")
-    except Exception as e:
-        print(f"  No photos found or error: {e}")
+        print(f"  Error: {e}")
         
 except Exception as e:
     print(f"\n❌ Error: {str(e)}")
