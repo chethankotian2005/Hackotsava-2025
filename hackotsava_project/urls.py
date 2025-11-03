@@ -10,6 +10,7 @@ from accounts.init_admin import init_admin
 from accounts.fix_admin_role import fix_admin_role
 from accounts.check_admin import check_admin_status
 from accounts.quick_fix_admin import quick_fix_admin
+from accounts.sync_photos_view import sync_cloudinary_photos
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,6 +21,8 @@ urlpatterns = [
     path('fix-admin-role/', fix_admin_role, name='fix_admin_role'),
     path('check-admin-status/', check_admin_status, name='check_admin_status'),
     path('quick-fix-admin/', quick_fix_admin, name='quick_fix_admin'),
+    # Cloudinary sync URL
+    path('sync-cloudinary-photos/', sync_cloudinary_photos, name='sync_cloudinary_photos'),
 ]
 
 # Serve media files in development
